@@ -1,6 +1,9 @@
 # jest-styled-components-stylelint
 
-A helper for running stylelint on your styled-components styles _at runtime_.
+A helper for running stylelint on your styled-components styles **at runtime**.
+
+That means it lints the resulting styles and doesn’t get tripped up by all your
+dynamic interpolations!
 
 ## Usage
 
