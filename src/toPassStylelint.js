@@ -28,11 +28,11 @@ function toPassStylelint(lintResults, failOnError) {
   if (pass) {
     return {
       pass,
-      message: () => `expected not to pass stylelint, but it found no errors`
+      message: () => `Expected not to pass stylelint, but it found no errors`
     }
   } else {
     const message = () => {
-      let output = `expected to pass stylelint, but it found `
+      let output = `Expected to pass stylelint, but it found `
       output += `${this.utils.pluralize('error', errorCount)}:\n\n`
       output += lintResults
         .map(({ result, options }) => {
