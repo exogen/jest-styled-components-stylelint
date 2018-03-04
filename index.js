@@ -44,7 +44,7 @@ function createAssertion(failOnError) {
           .map(result => result.output)
           .filter(output => output)
           .join('\n')
-        output = output.replace(/__TEST_PATH__/, relativePath)
+        output = output.replace(/__TEST_PATH__/g, relativePath)
         // Remove excessive whitespace at the end of stylelint output.
         output = output.replace(/\n\n$/, '')
         return output
