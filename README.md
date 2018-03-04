@@ -52,5 +52,6 @@ Default: `true`
 #### More…
 
 All remaining options are passed along to [stylelint’s `lint()` function][lint].
+The `formatter` option defaults to `string`.
 
 [lint]: https://github.com/stylelint/stylelint/blob/master/docs/user-guide/node-api.md#options

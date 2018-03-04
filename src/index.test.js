@@ -27,7 +27,7 @@ test('styles without lint log nothing', () => {
 })
 
 test('passes stylelint', () => {
-  // prettier-disable
+  // prettier-ignore
   const Title = styled.h1`
     color: red;
   `
@@ -35,7 +35,7 @@ test('passes stylelint', () => {
 })
 
 test('does not pass stylelint', () => {
-  // prettier-disable
+  // prettier-ignore
   const Title = styled.h1`
     color: {oops!}
   `
@@ -43,11 +43,11 @@ test('does not pass stylelint', () => {
 })
 
 test('works on nested style rules', () => {
-  // prettier-disable
+  // prettier-ignore
   const Link = styled.a`
-    text-decoration: underline;
+    text-decoration: undrln
   `
-  // prettier-disable
+  // prettier-ignore
   const Title = styled.h1.attrs({
     children: <Link />
   })`
@@ -56,8 +56,9 @@ test('works on nested style rules', () => {
     a:link {
       text-decoration: 5;
 
-      @media (min-width: 100px) {
-        width: 10frobs;
+
+      @media (min-width: ) {
+        width: 10frobs
       }
     }
   `
