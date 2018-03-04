@@ -20,6 +20,20 @@ configure({
 })
 ```
 
+Then in your tests, just make sure something renders your components:
+
+```js
+import TestRenderer from 'react-test-renderer'
+
+test('renders successfully', () => {
+  const wrapper = TestRenderer.create(<Button />)
+  expect(wrapper.toJSON()).toMatchSnapshot()
+})
+```
+
+Any stylelint errors will be written to stderr during the test run. And if
+`failOnError` is true, the test will also fail!
+
 ### Options
 
 [See the options for stylis-plugin-stylelint](https://github.com/exogen/stylis-plugin-stylelint).
