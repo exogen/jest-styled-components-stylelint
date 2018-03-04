@@ -16,7 +16,10 @@ function countErrors(lintResults) {
       return (
         count +
         result.results.reduce((count, ruleResult) => {
-          return count + (ruleResult.errored ? 1 : 0)
+          const errorWarnings = ruleResult.warnings.filter(
+            warning => warning.severity === 'error'
+          )
+          return count + (ruleResult.errored ? errorWarnings.length || 1 : 0)
         }, 0)
       )
     }
@@ -45,7 +48,8 @@ function createAssertion(failOnError) {
           .filter(output => output)
           .join('\n')
         output = output.replace(/__TEST_PATH__/g, relativePath)
-        // Remove excessive whitespace at the end of stylelint output.
+        // Remove excessive whitespace.
+        output = output.replace(/\n\n\n/g, '\n')
         output = output.replace(/\n\n$/, '')
         return output
       }
