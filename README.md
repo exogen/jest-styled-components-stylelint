@@ -34,6 +34,52 @@ test('renders successfully', () => {
 Any stylelint errors will be written to stderr during the test run. And if
 `failOnError` is true, the test will also fail!
 
+### toPassStylelint
+
+Upon configuration, `jest-styled-components-stylelint` will add a matcher called
+`toPassStylelint`.
+
+If you enable the `failOnError` option, this assertion is run automatically for
+you at the end of each test (using `afterEach`). All lint encountered during the
+execution of the test will be checked.
+
+If you’d rather be more explicit in your tests, you can use this matcher
+directly by passing a function to `expect()`. The function should cause the
+components you want to check to be rendered. Like so:
+
+```jsx
+test('passes stylelint', () => {
+  const Title = styled.h1`
+    color: red;
+  `
+  expect(() => TestRenderer.create(<Title />)).toPassStylelint()
+})
+
+test('does not pass stylelint', () => {
+  const Title = styled.h1`
+    color: {oops!}
+  `
+  expect(() => TestRenderer.create(<Title />)).not.toPassStylelint()
+})
+```
+
 ### Options
 
-[See the options for stylis-plugin-stylelint](https://github.com/exogen/stylis-plugin-stylelint).
+#### failOnError
+
+Whether there should be an automatic assertion at the end of every test (added
+via `afterEach`) that asserts there were no stylelint errors when running the
+test.
+
+If `true`, stylelint errors will be logged and cause the test to fail.
+
+If `false`, stylelint errors will be logged but the test won’t fail. In this
+case, you should use the `toPassStylelint` matcher (see above) when you want
+tests to fail due to linting.
+
+#### More…
+
+All remaining options are passed along to [stylis-plugin-stylelint][], so refer
+to its documentation.
+
+[stylis-plugin-stylelint]: https://github.com/exogen/stylis-plugin-stylelint

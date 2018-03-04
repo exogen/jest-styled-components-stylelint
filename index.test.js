@@ -9,9 +9,12 @@ test('causes styles with lint to log errors', () => {
     color: red;
     line-height: {20 / 14};
   `
-  const wrapper = TestRenderer.create(
-    <Title>Who wrote these styles anyway??</Title>
-  )
+  let wrapper
+  expect(() => {
+    wrapper = TestRenderer.create(
+      <Title>Who wrote these styles anyway??</Title>
+    )
+  }).not.toPassStylelint()
   expect(wrapper.toJSON()).toMatchSnapshot()
 })
 
@@ -24,4 +27,18 @@ test('styles without lint log nothing', () => {
     <Title>Who wrote these styles anyway??</Title>
   )
   expect(wrapper.toJSON()).toMatchSnapshot()
+})
+
+test('passes stylelint', () => {
+  const Title = styled.h1`
+    color: red;
+  `
+  expect(() => TestRenderer.create(<Title />)).toPassStylelint()
+})
+
+test('does not pass stylelint', () => {
+  const Title = styled.h1`
+    color: {oops!}
+  `
+  expect(() => TestRenderer.create(<Title />)).not.toPassStylelint()
 })

@@ -2,7 +2,7 @@
 
 exports[`causes styles with lint to log errors 1`] = `
 <h1
-  className="indextest__Title-anlvrb-0 bXtEFj"
+  className="indextest__Title-anlvrb-0 kouKkR"
 >
   Who wrote these styles anyway??
 </h1>
@@ -10,7 +10,7 @@ exports[`causes styles with lint to log errors 1`] = `
 
 exports[`styles without lint log nothing 1`] = `
 <h1
-  className="indextest__Title-anlvrb-1 eRzQie"
+  className="indextest__Title-anlvrb-1 betQCg"
 >
   Who wrote these styles anyway??
 </h1>
