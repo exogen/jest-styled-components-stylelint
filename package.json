@@ -1,0 +1,43 @@
+{
+  "name": "jest-styled-components-stylelint",
+  "version": "0.0.0",
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "scripts": {
+    "format": "prettier --write \"**/*.{js,md}\"",
+    "precommit": "lint-staged && npm test",
+    "test": "jest"
+  },
+  "lint-staged": {
+    "**/*.{js,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "peerDependencies": {
+    "styled-components": "^3.1.0"
+  },
+  "dependencies": {
+    "resolve-from": "^4.0.0",
+    "stylis-plugin-stylelint": "^0.2.0"
+  },
+  "devDependencies": {
+    "babel-plugin-styled-components": "^1.5.1",
+    "babel-preset-react": "^6.24.1",
+    "husky": "^0.14.3",
+    "jest": "^22.4.2",
+    "jest-styled-components": "^5.0.0",
+    "lint-staged": "^7.0.0",
+    "prettier": "^1.11.1",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-test-renderer": "^16.2.0",
+    "styled-components": "^3.1.6",
+    "stylelint": "^9.1.1",
+    "stylelint-config-standard": "^18.2.0",
+    "stylelint-config-styled-components": "^0.1.1"
+  }
+}

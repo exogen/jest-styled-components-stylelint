@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`causes styles with lint to log errors 1`] = `
+<h1
+  className="indextest__Title-anlvrb-0 bXtEFj"
+>
+  Who wrote these styles anyway??
+</h1>
+`;
+
+exports[`styles without lint log nothing 1`] = `
+<h1
+  className="indextest__Title-anlvrb-1 eRzQie"
+>
+  Who wrote these styles anyway??
+</h1>
+`;
