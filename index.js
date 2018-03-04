@@ -1,6 +1,7 @@
 const path = require('path')
 const resolveFrom = require('resolve-from')
-const stylelintPlugin = require('stylis-plugin-stylelint')
+const stylelint = require('stylelint')
+const stripIndentFn = require('strip-indent')
 
 // Get the instance of stylis that styled-components sees.
 const styledDir = path.dirname(
@@ -9,61 +10,73 @@ const styledDir = path.dirname(
 const stylisPath = resolveFrom(styledDir, 'stylis')
 const Stylis = require(stylisPath)
 
-const defaultOptions = {
-  getLintOptions: meta => {
-    return {
-      // TODO: Do something fancy to get either the test filename or
-      // better, the actual component file.
-      codeFilename: meta.selectors[0]
+function countErrors(lintResults) {
+  return lintResults.reduce((count, result) => {
+    if (result.errored) {
+      return (
+        count +
+        result.results.reduce((count, ruleResult) => {
+          return count + (ruleResult.errored ? 1 : 0)
+        }, 0)
+      )
     }
-  }
+    return count
+  }, 0)
 }
 
-function createAssertion(lintResults) {
-  function toPassStylelint(resultsOrFunction) {
-    if (typeof resultsOrFunction === 'function') {
-      lintResults.length = 0
-      resultsOrFunction()
-      resultsOrFunction = lintResults.slice()
-      // Reset here! Otherwise, it wouldn't be possible to use `failOnError` but
-      // have some tests that `expect(fn).not.toPassStylelint()`.
-      lintResults.length = 0
-    }
-    const errorCount = resultsOrFunction.reduce((count, result) => {
-      if (result.errored) {
-        return (
-          count +
-          result.results.reduce((count, ruleResult) => {
-            return count + (ruleResult.errored ? 1 : 0)
-          }, 0)
-        )
-      }
-      return count
-    }, 0)
+function createAssertion(failOnError) {
+  function toPassStylelint(lintResults, expected) {
+    this.utils.ensureNoExpected(expected, 'toPassStylelint')
+    const { testPath } = this
+    const relativePath = path.relative(process.cwd(), testPath)
+    const errorCount = countErrors(lintResults)
     const pass = errorCount === 0
-    const message = pass
-      ? () => `expected not to pass stylelint, but it found no errors`
-      : () =>
-          `expected to pass stylelint, but it found ${errorCount} error${
-            errorCount === 1 ? '' : 's'
-          }`
-    return { pass, message }
+    if (pass) {
+      return {
+        pass,
+        message: () => `expected not to pass stylelint, but it found no errors`
+      }
+    } else {
+      const message = () => {
+        let output = `expected to pass stylelint, but it found `
+        output += `${this.utils.pluralize('error', errorCount)}:\n`
+        output += lintResults
+          .map(result => result.output)
+          .filter(output => output)
+          .join('\n')
+        output = output.replace(/__TEST_PATH__/, relativePath)
+        // Remove excessive whitespace at the end of stylelint output.
+        output = output.replace(/\n\n$/, '')
+        return output
+      }
+      if (failOnError) {
+        return { pass, message }
+      } else {
+        console.error(message())
+        return { pass: true, message }
+      }
+    }
   }
 
   return toPassStylelint
 }
 
-function createMockStylis(options = {}) {
+function createMockStylis(styleCollector) {
   /**
-   * When using `stylis` as a factory, always return an instance with the
-   * `stylelint` plugin already added.
+   * When using `stylis` as a factory, always return an instance that will
+   * collect styles via `styleCollector` when called, before passing through to
+   * the real instance.
    */
   function mockStylis(...args) {
     if (this && this.constructor === mockStylis) {
-      const plugin = stylelintPlugin(options)
       const stylis = new Stylis(...args)
-      stylis.use(plugin)
-      return stylis
+      function stylisWrapper(selector, css) {
+        styleCollector(selector, css)
+        return stylis.apply(this, arguments)
+      }
+      stylisWrapper.use = stylis.use
+      stylisWrapper.set = stylis.set
+      return stylisWrapper
     }
     return Stylis.apply(this, args)
   }
@@ -71,38 +84,59 @@ function createMockStylis(options = {}) {
   return mockStylis
 }
 
+// Flag to show a nice warning if imported but not configured.
 let configured = false
 
 function configure(options = {}) {
   configured = true
 
-  const { failOnError } = options
-  const lintResults = []
-  const pluginOptions = Object.assign({}, defaultOptions, options, {
-    // Force this to be false, otherwise renderers will print an ugly error
-    // message about adding error boundaries to components and such. If
-    // `failOnError` is set, we'll check the results below and use `expect()` to
-    // fail the test in a nicer way.
-    failOnError: false,
-    resultCollector: resultObject => lintResults.push(resultObject)
-  })
+  const failOnError = options.failOnError !== false
+  const stripIndent = options.stripIndent !== false
 
-  expect.extend({
-    toPassStylelint: createAssertion(lintResults)
-  })
+  // Any options besides those above will be passed to `stylelint.lint()`.
+  const lintOptions = Object.assign({ formatter: 'string' }, options)
+  delete lintOptions.failOnError
+  delete lintOptions.stripIndent
 
-  if (failOnError) {
-    beforeEach(() => {
-      lintResults.length = 0
-    })
-
-    afterEach(() => {
-      expect(lintResults).toPassStylelint()
-      lintResults.length = 0
-    })
+  const collectedStyles = []
+  const styleCollector = (selector, css) => {
+    collectedStyles.push([selector, css])
   }
 
-  jest.doMock(stylisPath, () => createMockStylis(pluginOptions))
+  function runLint(styles) {
+    return Promise.all(
+      styles.map(([selector, css]) => {
+        const options = Object.assign({}, lintOptions, {
+          code: stripIndent ? stripIndentFn(css) : css,
+          // FIXME: There's probably no way we can get the actual component
+          // source file using styled-components. Possibly just its ID or
+          // `displayName` (by reading style tags and searching for metadata
+          // around each selector). Improve this to do that at some point. For
+          // now, show the selector and test file. `__TEST_PATH__` will be
+          // replaced in the matcher.
+          codeFilename: `${selector} rendered in __TEST_PATH__`
+        })
+        return stylelint.lint(options)
+      })
+    )
+  }
+
+  jest.doMock(stylisPath, () => createMockStylis(styleCollector))
+
+  const toPassStylelint = createAssertion(failOnError)
+  expect.extend({ toPassStylelint })
+
+  beforeEach(() => {
+    collectedStyles.length = 0
+  })
+
+  afterEach(() => {
+    if (collectedStyles.length) {
+      const styles = collectedStyles.slice()
+      collectedStyles.length = 0
+      return expect(runLint(styles)).resolves.toPassStylelint()
+    }
+  })
 }
 
 beforeAll(() => {
