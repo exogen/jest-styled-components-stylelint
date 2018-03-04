@@ -7,7 +7,7 @@ test('causes styles with lint to log errors', () => {
   // prettier-ignore
   const Title = styled.h1`
     color: red;
-    line-height: {20 / 14};
+    line-height: -
   `
   const wrapper = TestRenderer.create(
     <Title>Who wrote these styles anyway??</Title>
