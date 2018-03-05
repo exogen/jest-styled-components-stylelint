@@ -4,6 +4,7 @@ const stylelint = require('stylelint')
 const stripIndentFn = require('strip-indent')
 const toPassStylelint = require('./toPassStylelint')
 const findComponent = require('./findComponent')
+const createFormatter = require('./createFormatter')
 
 /**
  * Get the path to the `stylis` module that `styled-components` sees.
@@ -41,12 +42,23 @@ function createMockStylis(Stylis, styleCollector) {
  * Run lint on multiple styles and return a Promise that will resolve to an
  * array of results for each, with the original `selector` and `css` included.
  */
-function runLint(styles, lintOptions, preprocess) {
+function runLint(styles, lintOptions, preprocess, formatterOptions) {
   return Promise.all(
     styles.map(([selector, css]) => {
       const component = findComponent(selector)
       const code = preprocess ? preprocess(css) : css
-      const options = Object.assign({ code }, lintOptions)
+      const options = Object.assign(
+        {
+          code,
+          formatter: createFormatter(
+            selector,
+            code,
+            component,
+            formatterOptions
+          )
+        },
+        lintOptions
+      )
       return stylelint.lint(options).then(result => ({
         selector,
         css,
@@ -70,18 +82,16 @@ function configure(options = {}) {
 
   const failOnError = options.failOnError !== false
   const stripIndent = options.stripIndent !== false
+  const formatterOptions = options.formatterOptions
   const preprocess = stripIndent ? stripIndentFn : undefined
 
   // Any options besides those above will be passed to `stylelint.lint()`.
   const lintOptions = Object.assign(
     {
       syntax: 'scss',
-      formatter: 'string',
-      // FIXME: There's probably no way we can get the actual component source
-      // file using styled-components. Possibly just its ID or `displayName` (by
-      // reading style tags and searching for metadata around each selector).
-      // Improve this to do that at some point. For now, show the test file.
-      // `__COMPONENT_PATH__` will be replaced in the matcher.
+      // We don't know how to get the actual component file yet. But we can use
+      // `findComponent` to possibly get information about its name, className,
+      // ID, etc. Replace this string in the matcher.
       codeFilename: `__COMPONENT_PATH__`
     },
     options
@@ -89,6 +99,7 @@ function configure(options = {}) {
 
   delete lintOptions.failOnError
   delete lintOptions.stripIndent
+  delete lintOptions.formatterOptions
 
   const collectedStyles = []
   const styleCollector = (selector, css) => {
@@ -114,7 +125,12 @@ function configure(options = {}) {
       const styles = collectedStyles.slice()
       collectedStyles.length = 0
       // stylelint is async, so use `expect().resolves` and return the result.
-      const lintResults = runLint(styles, lintOptions, preprocess)
+      const lintResults = runLint(
+        styles,
+        lintOptions,
+        preprocess,
+        formatterOptions
+      )
       return expect(lintResults).resolves.toPassStylelint(failOnError)
     }
   })

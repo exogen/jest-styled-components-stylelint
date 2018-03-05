@@ -3,8 +3,8 @@
 A helper for running stylelint on your styled-components styles **at runtime**.
 
 That means it lints the styles _after_ all your dynamic interpolations are
-resolved! So it doesn’t get tripped up by them or need annotations, and will
-more accurately reflect the styles you’re actually shipping.
+resolved! So it doesn’t get tripped up or need annotations, and will more
+accurately reflect the styles you’re actually shipping.
 
 ![Screenshot](./screenshot.png)
 
@@ -17,10 +17,7 @@ import configure from 'jest-styled-components-stylelint'
 
 // NOTE: This should be configured before `styled-components` and `stylis` are
 // imported anywhere!
-configure({
-  failOnError: true,
-  formatter: 'string'
-})
+configure({ failOnError: true })
 ```
 
 Then in your tests, just make sure something renders your components:
@@ -52,10 +49,23 @@ If `false`, stylelint errors will be logged to stderr but the test won’t fail.
 
 Default: `true`
 
+#### formatterOptions
+
+By default, this package uses its own custom stylelint formatter (seen in the
+screenshot above). It shows the styles inline so they’re easier to find and fix.
+You can tune some aspects of the formatter:
+
+* `collapseLines`: Whether each line of code with warnings will be printed just
+  once, or multiple times (once for each warning). Defaults to `true`.
+
+See below if you’d like to change the stylelint formatter completely.
+
 #### More…
 
 All remaining options are passed along to [stylelint’s `lint()` function][lint].
-The `formatter` option defaults to `string`.
+
+You can use this to pass a custom `formatter` (or any of the defaults from
+stylelint, like `string`).
 
 [lint]: https://github.com/stylelint/stylelint/blob/master/docs/user-guide/node-api.md#options
 

@@ -53,17 +53,12 @@ function toPassStylelint(lintResults, failOnError) {
       output += `${this.utils.pluralize('error', errorCount)}:\n\n`
       output += lintResults
         .map(({ selector, component, result, options }) => {
-          let output = result.output
-          if (options.formatter === 'string') {
-            // Remove excessive whitespace in the default `string` formatter.
-            output = output.replace(/(^\n|\n$)/g, '')
-          }
           const componentPath = formatComponentPath(
             testFile,
             selector,
             component
           )
-          return output.replace(/__COMPONENT_PATH__/g, componentPath)
+          return result.output.replace(/__COMPONENT_PATH__/g, componentPath)
         })
         .filter(output => output)
         .join('\n')

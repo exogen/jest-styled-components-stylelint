@@ -15,6 +15,7 @@
   },
   "files": [
     "src/index.js",
+    "src/createFormatter.js",
     "src/findComponent.js",
     "src/toPassStylelint.js"
   ],
