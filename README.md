@@ -2,8 +2,9 @@
 
 A helper for running stylelint on your styled-components styles **at runtime**.
 
-That means it lints the resulting styles and doesn’t get tripped up by all your
-dynamic interpolations!
+That means it lints the styles _after_ all your dynamic interpolations are
+resolved! So it doesn’t get tripped up by them or need annotations, and will
+more accurately reflect the styles you’re actually shipping.
 
 ![Screenshot](./screenshot.png)
 
