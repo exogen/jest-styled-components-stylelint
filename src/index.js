@@ -3,6 +3,7 @@ const resolveFrom = require('resolve-from')
 const stylelint = require('stylelint')
 const stripIndentFn = require('strip-indent')
 const toPassStylelint = require('./toPassStylelint')
+const findComponent = require('./findComponent')
 
 /**
  * Get the path to the `stylis` module that `styled-components` sees.
@@ -43,11 +44,13 @@ function createMockStylis(Stylis, styleCollector) {
 function runLint(styles, lintOptions, preprocess) {
   return Promise.all(
     styles.map(([selector, css]) => {
+      const component = findComponent(selector)
       const code = preprocess ? preprocess(css) : css
       const options = Object.assign({ code }, lintOptions)
       return stylelint.lint(options).then(result => ({
         selector,
         css,
+        component,
         options,
         result
       }))
@@ -78,8 +81,8 @@ function configure(options = {}) {
       // file using styled-components. Possibly just its ID or `displayName` (by
       // reading style tags and searching for metadata around each selector).
       // Improve this to do that at some point. For now, show the test file.
-      // `__TEST_PATH__` will be replaced in the matcher.
-      codeFilename: `__TEST_PATH__`
+      // `__COMPONENT_PATH__` will be replaced in the matcher.
+      codeFilename: `__COMPONENT_PATH__`
     },
     options
   )

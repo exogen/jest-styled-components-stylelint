@@ -1,12 +1,24 @@
 {
   "name": "jest-styled-components-stylelint",
   "version": "0.4.1",
+  "description": "A helper for running stylelint on your styled-components styles at runtime.",
+  "keywords": [
+    "jest",
+    "styled-components",
+    "stylelint"
+  ],
+  "author": "Brian Beck <exogen@gmail.com>",
   "license": "MIT",
-  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/exogen/jest-styled-components-stylelint"
+  },
   "files": [
     "src/index.js",
+    "src/findComponent.js",
     "src/toPassStylelint.js"
   ],
+  "main": "src/index.js",
   "scripts": {
     "format": "prettier --write \"**/*.{js,md}\"",
     "precommit": "lint-staged && npm test",
@@ -24,6 +36,7 @@
     "stylelint": "^9.1.1"
   },
   "dependencies": {
+    "chalk": "^2.3.2",
     "resolve-from": "^4.0.0"
   },
   "devDependencies": {

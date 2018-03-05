@@ -5,6 +5,8 @@ A helper for running stylelint on your styled-components styles **at runtime**.
 That means it lints the resulting styles and doesn’t get tripped up by all your
 dynamic interpolations!
 
+![Screenshot](./screenshot.png)
+
 ## Usage
 
 In a Jest setup file like `setupTestFramework.js`:

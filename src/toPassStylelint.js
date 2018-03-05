@@ -1,4 +1,5 @@
 const path = require('path')
+const chalk = require('chalk')
 
 /**
  * Count the number of warnings with 'error' severity.
@@ -20,9 +21,25 @@ function countErrors(lintResults) {
   }, 0)
 }
 
+function formatComponentPath(testFile, selector, component) {
+  const renderedIn = chalk.dim(' rendered in ')
+  const withClassName = chalk.dim(' with className ')
+  const andID = chalk.dim(' and ID ')
+  if (component) {
+    return `<${component.name}>${renderedIn}${testFile}${withClassName}${
+      component.hash
+    }${andID}${component.id}`
+  } else if (selector) {
+    const hash = selector.slice(1)
+    return `Component${renderedIn}${testFile}${withClassName}${hash}`
+  } else {
+    return `Component${renderedIn}${testFile}`
+  }
+}
+
 function toPassStylelint(lintResults, failOnError) {
   const { testPath } = this
-  const relativePath = path.relative(process.cwd(), testPath)
+  const testFile = path.basename(testPath)
   const errorCount = countErrors(lintResults)
   const pass = errorCount === 0
   if (pass) {
@@ -35,17 +52,23 @@ function toPassStylelint(lintResults, failOnError) {
       let output = `Expected to pass stylelint, but it found `
       output += `${this.utils.pluralize('error', errorCount)}:\n\n`
       output += lintResults
-        .map(({ result, options }) => {
+        .map(({ selector, component, result, options }) => {
+          let output = result.output
           if (options.formatter === 'string') {
             // Remove excessive whitespace in the default `string` formatter.
-            return result.output.replace(/(^\n|\n$)/g, '')
+            output = output.replace(/(^\n|\n$)/g, '')
           }
-          return result.output
+          const componentPath = formatComponentPath(
+            testFile,
+            selector,
+            component
+          )
+          return output.replace(/__COMPONENT_PATH__/g, componentPath)
         })
         .filter(output => output)
         .join('\n')
 
-      return output.replace(/__TEST_PATH__/g, relativePath)
+      return output
     }
     if (failOnError) {
       return { pass, message }
