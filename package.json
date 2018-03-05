@@ -1,6 +1,6 @@
 {
   "name": "jest-styled-components-stylelint",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A helper for running stylelint on your styled-components styles at runtime.",
   "keywords": [
     "jest",
