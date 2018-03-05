@@ -1,4 +1,5 @@
 require('./index')({ failOnError: false })
+require('jest-styled-components')
 const React = require('react')
 const styled = require('styled-components').default
 const TestRenderer = require('react-test-renderer')

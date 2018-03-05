@@ -1,16 +1,25 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`causes styles with lint to log errors 1`] = `
+.c0 {
+  color: red;
+  line-height: -;
+}
+
 <h1
-  className="indextest__Title-bnge21-0 hMxMnR"
+  className="c0"
 >
   Who wrote these styles anyway??
 </h1>
 `;
 
 exports[`styles without lint log nothing 1`] = `
+.c0 {
+  color: red;
+}
+
 <h1
-  className="indextest__Title-bnge21-1 jvejDF"
+  className="c0"
 >
   Who wrote these styles anyway??
 </h1>

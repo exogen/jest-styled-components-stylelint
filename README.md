@@ -58,3 +58,49 @@ All remaining options are passed along to [stylelint’s `lint()` function][lint
 The `formatter` option defaults to `string`.
 
 [lint]: https://github.com/stylelint/stylelint/blob/master/docs/user-guide/node-api.md#options
+
+## Troubleshooting
+
+**It’s not doing anything!**
+
+If you’re using this with `jest-styled-components`, make sure to import and
+`configure()` this module _first_, before importing `jest-styled-components`.
+Otherwise, the necessary modules aren’t mocked in time.
+
+---
+
+**There are a lot of errors, but my code looks fine.**
+
+Are they spacing errors, like `declaration-block-semicolon-space-after`?
+
+> Expected single space after ";" in a single-line declaration block
+
+If so, this is because `babel-plugin-styled-components` ships with the `minify`
+option enabled by default, so your styles come pre-minified.
+
+You can try disabling this in your test environment by modifying your Babel
+configuration:
+
+```js
+plugins: [
+  ['styled-components', { ssr: true, minify: process.env.NODE_ENV !== 'test' }]
+]
+```
+
+(As a last resort, you could disable the `stylelint` rules in question.)
+
+---
+
+**I’m including some third-party CSS in my template strings and I don’t care
+about linting it.**
+
+You can try putting normal stylelint comment directives around it, they should
+work just fine:
+
+```css
+/* stylelint-disable */
+${someExternalCSS}
+/* stylelint-enable */
+```
+
+---
