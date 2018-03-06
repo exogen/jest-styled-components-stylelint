@@ -20,6 +20,12 @@ import configure from 'jest-styled-components-stylelint'
 configure({ failOnError: true })
 ```
 
+Or simply:
+
+```js
+require('jest-styled-components-stylelint')()
+```
+
 Then in your tests, just make sure something renders your components:
 
 ```js
