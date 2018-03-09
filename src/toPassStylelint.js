@@ -33,7 +33,7 @@ function formatComponentPath(testFile, selector, component) {
     const hash = selector.slice(1)
     return `Component${renderedIn}${testFile}${withClassName}${hash}`
   } else {
-    return `Component${renderedIn}${testFile}`
+    return `injectGlobal${renderedIn}${testFile}`
   }
 }
 

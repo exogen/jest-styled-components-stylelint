@@ -15,7 +15,11 @@ function createFormatter(
   return results => {
     let output = ''
     results.forEach(result => {
-      const warnings = result.warnings.slice().sort((a, b) => {
+      if (!result.errored) {
+        return
+      }
+      const warnings = result.warnings.slice()
+      warnings.sort((a, b) => {
         if (a.line < b.line) {
           return -1
         } else if (a.line > b.line) {

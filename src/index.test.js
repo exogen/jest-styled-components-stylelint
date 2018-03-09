@@ -1,10 +1,16 @@
 require('./index')({ failOnError: false })
 require('jest-styled-components')
 const React = require('react')
-const styled = require('styled-components').default
+const { default: styled, injectGlobal } = require('styled-components')
 const TestRenderer = require('react-test-renderer')
 
 test('causes styles with lint to log errors', () => {
+  // prettier-ignore
+  injectGlobal`
+    .test {
+      test-decoration: underlin
+    }
+  `
   // prettier-ignore
   const Title = styled.h1`
     color: red;
@@ -17,17 +23,11 @@ test('causes styles with lint to log errors', () => {
 })
 
 test('styles without lint log nothing', () => {
-  // prettier-ignore
-  const Title = styled.h1`
-    color: red;
+  injectGlobal`
+    .test {
+      text-decoration: underline;
+    }
   `
-  const wrapper = TestRenderer.create(
-    <Title>Who wrote these styles anyway??</Title>
-  )
-  expect(wrapper.toJSON()).toMatchSnapshot()
-})
-
-test('passes stylelint', () => {
   // prettier-ignore
   const Title = styled.h1`
     color: red;
@@ -64,4 +64,30 @@ test('works on nested style rules', () => {
     }
   `
   TestRenderer.create(<Title />)
+})
+
+test('handles styles without newlines', () => {
+  // prettier-ignore
+  injectGlobal`.selector { color:black }`
+  // prettier-ignore
+  const Link = styled.a`text-decroation: underline`
+  TestRenderer.create(<Link />)
+})
+
+test('handles empty styles', () => {
+  // prettier-ignore
+  injectGlobal``
+  // prettier-ignore
+  const Link = styled.a``
+  TestRenderer.create(<Link />)
+})
+
+test('handles styles with weird newline situations', () => {
+  // prettier-ignore
+  const Link = styled.a`text-decroation: value(
+      one,
+      two,
+      three)
+  `
+  TestRenderer.create(<Link />)
 })

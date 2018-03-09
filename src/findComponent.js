@@ -6,6 +6,9 @@ function findComponent(selector) {
   if (typeof document !== 'object' || !document.querySelectorAll) {
     return
   }
+  if (!selector) {
+    return
+  }
   const hash = selector.slice(1)
   const styleSelector = `style[data-styled-components~="${hash}"]`
   const styleTag = document.querySelectorAll(styleSelector)[0]

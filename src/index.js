@@ -1,10 +1,10 @@
 const path = require('path')
 const resolveFrom = require('resolve-from')
 const stylelint = require('stylelint')
-const stripIndentFn = require('strip-indent')
 const toPassStylelint = require('./toPassStylelint')
 const findComponent = require('./findComponent')
 const createFormatter = require('./createFormatter')
+const wrapFormatter = require('./wrapFormatter')
 
 /**
  * Get the path to the `stylis` module that `styled-components` sees.
@@ -42,32 +42,114 @@ function createMockStylis(Stylis, styleCollector) {
  * Run lint on multiple styles and return a Promise that will resolve to an
  * array of results for each, with the original `selector` and `css` included.
  */
-function runLint(styles, lintOptions, preprocess, formatterOptions) {
+function runLint(styles, lintOptions, stripIndent, formatterOptions) {
   return Promise.all(
     styles.map(([selector, css]) => {
       const component = findComponent(selector)
-      const code = preprocess ? preprocess(css) : css
-      const options = Object.assign(
-        {
-          code,
-          formatter: createFormatter(
-            selector,
-            code,
-            component,
-            formatterOptions
-          )
-        },
-        lintOptions
-      )
-      return stylelint.lint(options).then(result => ({
-        selector,
-        css,
-        component,
-        options,
-        result
-      }))
+
+      if (stripIndent) {
+        // Strip indentation based on the number of spaces at the start of the
+        // last line (which should precede the backtick).
+        const trailingIndent = css.match(/([\r\n])( *)[)}'";]*$/)
+        if (trailingIndent) {
+          const baseIndent = trailingIndent[2]
+          if (baseIndent) {
+            const repeat = selector ? 1 : 2
+            const pattern = new RegExp(`^${baseIndent.repeat(repeat)}`, 'gm')
+            css = css.replace(pattern, '')
+          }
+        }
+      }
+
+      // If we need to modify the code at all to prepare it for stylelint, we
+      // may need to modify lines/columns or suppress certain warnings.
+      let code = css
+      let filterWarning
+
+      // Prepare input for stylelint.
+      const transformResult = preprocess(selector, code)
+      if (Array.isArray(transformResult)) {
+        code = transformResult[0]
+        filterWarning = transformResult[1]
+      } else {
+        code = transformResult
+      }
+
+      const options = Object.assign({ code }, lintOptions)
+
+      // Wrap or create formatter.
+      if (typeof options.formatter === 'string') {
+        const formatter = stylelint.formatters[options.formatter]
+        if (formatter) {
+          options.formatter = wrapFormatter(formatter, filterWarning)
+        }
+      } else if (options.formatter) {
+        options.formatter = wrapFormatter(options.formatter, filterWarning)
+      } else {
+        const formatter = createFormatter(
+          selector,
+          css,
+          component,
+          formatterOptions
+        )
+        options.formatter = wrapFormatter(formatter, filterWarning)
+      }
+
+      return stylelint.lint(options).then(result => {
+        return {
+          selector,
+          css,
+          component,
+          options,
+          result
+        }
+      })
     })
   )
+}
+
+/**
+ * Prepare input CSS for stylelint. If `selector` is empty, this does nothing.
+ * But if there is a selector, we need to wrap `css` with it. Otherwise,
+ * stylelint doesn't consider it a proper block of rules, and you'll miss some
+ * warnings (like `property-no-unknown`).
+ *
+ * Since we modify the user's CSS, this also returns a function that will be
+ * used to modify or suppress warnings, so they don't get confusing results.
+ */
+function preprocess(selector, css) {
+  if (!css || !selector) {
+    return css
+  }
+  const lines = css.split(/(?:\r\n|\r|\n)/)
+  return [
+    `${selector} {${css}}`,
+    warning => {
+      const columnsAdded = selector.length + 2
+      if (warning.line === 1) {
+        // If any issues come from the selector we added, filter them out.
+        if (warning.column <= columnsAdded) {
+          return false
+        }
+        if (
+          warning.rule === 'block-opening-brace-space-after' &&
+          warning.column === columnsAdded + 1
+        ) {
+          return false
+        }
+        // Otherwise, fix the column number to account for the selector.
+        warning.column -= columnsAdded
+      }
+      if (warning.line === lines.length) {
+        if (
+          warning.rule === 'block-closing-brace-space-before' &&
+          warning.column === lines[lines.length - 1].length
+        ) {
+          return false
+        }
+      }
+    }
+  ]
 }
 
 // Flag to show a nice warning if imported but not configured.
@@ -83,7 +165,6 @@ function configure(options = {}) {
   const failOnError = options.failOnError !== false
   const stripIndent = options.stripIndent !== false
   const formatterOptions = options.formatterOptions
-  const preprocess = stripIndent ? stripIndentFn : undefined
 
   // Any options besides those above will be passed to `stylelint.lint()`.
   const lintOptions = Object.assign(
@@ -128,9 +209,12 @@ function configure(options = {}) {
       const lintResults = runLint(
         styles,
         lintOptions,
-        preprocess,
+        stripIndent,
         formatterOptions
       )
+      lintResults.catch(err => {
+        console.log(err.stack)
+      })
       return expect(lintResults).resolves.toPassStylelint(failOnError)
     }
   })
